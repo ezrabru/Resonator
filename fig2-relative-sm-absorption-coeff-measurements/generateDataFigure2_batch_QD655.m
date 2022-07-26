@@ -103,14 +103,6 @@ for id_roi=1:numRois
     close all
 end
 
-
-
-return
-
-
-
-
-
 %% Plot of median spectra for each quantum dot
 
 clear all

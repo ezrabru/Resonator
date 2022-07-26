@@ -103,14 +103,6 @@ for id_roi=1:numRois
     close all
 end
 
-
-
-return
-
-
-
-
-
 %% Plot of median spectra for each quantum dot
 
 clear all
@@ -275,7 +267,6 @@ xlabel('Ratio'); ylabel('Occurence'); title('Ensemble')
 legend('405/405 nm','488/405 nm','561/405 nm','638/405 nm')
 
 %%
-% close all
 
 fig = figure('position',[50 50 800 200]);
 bins = -0.25:0.01:0.25;
