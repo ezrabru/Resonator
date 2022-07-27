@@ -1,8 +1,7 @@
 %% Batch semi-automated analysis of 2-lobe resonator QDot data
 
-clear all
-close all
-clc
+clear all; close all; clc
+addpath('lib')
 
 numRois = 15;
 directory_tif = 'D:\manuscripts\resonator\new data\20201024_resonator quantitative\QD585'; % path to folder with tif stacks
@@ -14,6 +13,7 @@ flag405 = 'B405_T405';
 flag488 = 'B405_T488';
 flag561 = 'B405_T561';
 flag638 = 'B405_T638';
+
 
 %% Prep
 
@@ -102,7 +102,7 @@ for id_roi=1:numRois
     
     close all
 end
-
+return
 %% Plot of median spectra for each quantum dot
 
 clear all
