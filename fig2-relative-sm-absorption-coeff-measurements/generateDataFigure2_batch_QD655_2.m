@@ -6,8 +6,6 @@ addpath('lib2')
 % PSF displacement
 dx = 0;
 dy = 37;
-lobeDist = sqrt(dx^2 + dy^2);
-wiggle = 1;
 
 numRois = 15;
 %directory_tif = 'D:\manuscripts\resonator\new data\20201024_resonator quantitative\QD585'; % path to folder with tif stacks
@@ -36,6 +34,8 @@ localisationParams.DoGsigmaLarge = 3;
 localisationParams.DoGminThreshold = 500;
 localisationParams.method = 'asymmetric gaussian';
 localisationParams.w = 7;
+localisationParams.wiggle = 1;
+localisationParams.lobeDist = sqrt(dx^2 + dy^2);
 
 %% Prep
 
@@ -84,50 +84,7 @@ img = double(imread(pathCalibStack));
 bkgnd = Proc.estimateBackground(pathCalibStack);
 locs = Proc.processFrame(img,bkgnd);
 
-%% Group localisations
 
-x = [locs.x]';
-y = [locs.y]';
-numLocs = numel(x);
-
-D = squareform(pdist([x y]/1e9,'euclidean'));
-
-% % remove localisations that are too close together or overlapping
-% minDist = localisationParams.w;
-% D(D < minDist) = 0;
-
-% remove localisations that can't be paired with another one considering
-% the PSF spatial arrangement
-D(D < lobeDist - wiggle) = 0;
-D(D > lobeDist + wiggle) = 0;
-
-% get upper triangle
-[id,~] = find(triu(D));
-locs_upper_lobe = locs(id);
-
-% get lower triangle
-[id,~] = find(tril(D));
-locs_lower_lobe = locs(id);
-
-% get center of PSF
-locs_center = table;
-locs_center.x = ([locs_lower_lobe.x] + [locs_upper_lobe.x])/2;
-locs_center.y = ([locs_lower_lobe.y] + [locs_upper_lobe.y])/2;
-locs_center.photons = [locs_lower_lobe.photons] + [locs_upper_lobe.photons];
-
-locsTable = struct;
-locsTable.upperLobe = locs_upper_lobe;
-locsTable.lowerLobe = locs_lower_lobe;
-locsTable.center = locs_center;
-
-figure;
-imshow(img,[]); hold on
-scatter([locsTable.upperLobe.y]/1e9,[locsTable.upperLobe.x]/1e9)
-scatter([locsTable.lowerLobe.y]/1e9,[locsTable.lowerLobe.x]/1e9)
-scatter([locsTable.center.y]/1e9,[locsTable.center.x]/1e9)
-
-
-%%
 
 
 %% Functions

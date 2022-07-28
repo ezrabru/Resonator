@@ -27,14 +27,54 @@ classdef Process
             img = (img - bkgnd - obj.Microscope.camOffset)./(obj.Microscope.camGain*obj.Microscope.camQE); % convert to photons
             
             [x,y] = find2DlocalisationCandidates(obj,img);
-            figure; imshow(img,[]); colorbar; hold on; scatter(y,x,'or')
+%             figure; imshow(img,[]); colorbar; hold on; scatter(y,x,'or')
             
             locs = fit2Dlocalisations(obj,img,x,y);
-            hold on; scatter([locs.y]*1e-9,[locs.x]*1e-9,'xg')
+%             hold on; scatter([locs.y]*1e-9,[locs.x]*1e-9,'xg')
             
-%             locs = groupLocalisations()
+            locs = groupLocalisations(obj,locs);
 
             if isempty(locs); locs = nan; end
+        end
+
+        function locsGrouped = groupLocalisations(obj,locs)
+            %GROUPLOCALISATIONS
+            x = [locs.x]';
+            y = [locs.y]';
+            D = squareform(pdist([x y]/1e9,'euclidean'));
+            
+            % % remove localisations that are too close together or overlapping
+            % minDist = localisationParams.w;
+            % D(D < minDist) = 0;
+            
+            % remove localisations that can't be paired with another one considering
+            % the PSF spatial arrangement
+            D(D < obj.localisationParams.lobeDist - obj.localisationParams.wiggle) = 0;
+            D(D > obj.localisationParams.lobeDist + obj.localisationParams.wiggle) = 0;
+
+            % get upper triangle
+            [id,~] = find(triu(D));
+            locs_upper_lobe = locs(id);
+            
+            % get lower triangle
+            [id,~] = find(tril(D));
+            locs_lower_lobe = locs(id);
+            
+            % get center of PSF
+            locs_center = table;
+            locs_center.x = ([locs_lower_lobe.x] + [locs_upper_lobe.x])/2;
+            locs_center.y = ([locs_lower_lobe.y] + [locs_upper_lobe.y])/2;
+            locs_center.photons = [locs_lower_lobe.photons] + [locs_upper_lobe.photons];
+            
+            locsGrouped = struct;
+            locsGrouped.upperLobe = locs_upper_lobe;
+            locsGrouped.lowerLobe = locs_lower_lobe;
+            locsGrouped.center = locs_center;
+            
+            figure;
+            scatter([locsGrouped.upperLobe.y]/1e9,[locsGrouped.upperLobe.x]/1e9); hold on
+            scatter([locsGrouped.lowerLobe.y]/1e9,[locsGrouped.lowerLobe.x]/1e9)
+            scatter([locsGrouped.center.y]/1e9,[locsGrouped.center.x]/1e9)
         end
 
         function bkgnd = estimateBackground(obj,filepath)
@@ -221,7 +261,7 @@ classdef Process
     end
     
     methods (Static)
-        
+
         function crop = cropToROICentered(img,fov)
             %CROPTOROICENTERED
             [nx,ny] = size(img);
