@@ -89,37 +89,46 @@ locs = Proc.processFrame(img,bkgnd);
 x = [locs.x]';
 y = [locs.y]';
 numLocs = numel(x);
-id = 1:numLocs;
-group_id = nan(numLocs,1);
 
 D = squareform(pdist([x y]/1e9,'euclidean'));
 
 % % remove localisations that are too close together or overlapping
 % minDist = localisationParams.w;
-% D(D < minDist) = nan;
+% D(D < minDist) = 0;
 
 % remove localisations that can't be paired with another one considering
 % the PSF spatial arrangement
-D((D < lobeDist - wiggle)) = 0;
-D((D > lobeDist + wiggle)) = 0;
+D(D < lobeDist - wiggle) = 0;
+D(D > lobeDist + wiggle) = 0;
 
-% remove half of the pdist matrix (because of symmetry)
-id_lower_lobe = tril(D);
-id_upper_lobe = triu(D);
+% get upper triangle
+[id,~] = find(triu(D));
+locs_upper_lobe = locs(id);
 
-[row,col] = find(triu(D));
-coord_upper_lobe = [x(row) y(col)]/1e9;
+% get lower triangle
+[id,~] = find(tril(D));
+locs_lower_lobe = locs(id);
 
-[row,col] = find(tril(D));
-coord_lower_lobe = [x(row) y(col)]/1e9;
+% get center of PSF
+locs_center = table;
+locs_center.x = ([locs_lower_lobe.x] + [locs_upper_lobe.x])/2;
+locs_center.y = ([locs_lower_lobe.y] + [locs_upper_lobe.y])/2;
+locs_center.photons = [locs_lower_lobe.photons] + [locs_upper_lobe.photons];
 
-group_id = 1:numel(x(row));
+locsTable = struct;
+locsTable.upperLobe = locs_upper_lobe;
+locsTable.lowerLobe = locs_lower_lobe;
+locsTable.center = locs_center;
 
-figure
-% imshow(img,[]); hold on
-scatter(coord_upper_lobe(:,2),coord_upper_lobe(:,1),100,group_id,'s'); hold on
-scatter(coord_lower_lobe(:,2),coord_lower_lobe(:,1),100,group_id,'o');
-colormap(lines)
+figure;
+imshow(img,[]); hold on
+scatter([locsTable.upperLobe.y]/1e9,[locsTable.upperLobe.x]/1e9)
+scatter([locsTable.lowerLobe.y]/1e9,[locsTable.lowerLobe.x]/1e9)
+scatter([locsTable.center.y]/1e9,[locsTable.center.x]/1e9)
+
+
+%%
+
 
 %% Functions
 
