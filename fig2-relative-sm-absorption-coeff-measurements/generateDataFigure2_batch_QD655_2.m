@@ -83,7 +83,49 @@ Proc = Process(Scope,bkgndEstimation,localisationParams);
 img = double(imread(pathCalibStack));
 bkgnd = Proc.estimateBackground(pathCalibStack);
 locs = Proc.processFrame(img,bkgnd);
+%%
 
+results = {};
+
+for id_roi=1:numRois
+    
+    results(id_roi).roiID = id_roi;
+    
+    % perform localiation on the MIP of the 405/405 nm dataset
+    filepath = fullfile(directory_tif,roiPaths(id_roi).filenameCalib);
+    mip = Proc.getMaximumIntensityProjectionFromPath(filepath);
+    locs = Proc.processFrame(mip,0);
+    
+    % 405 nm
+    filepath = fullfile(directory_tif,roiPaths(id_roi).filename405);
+    [intLobe1,intLobe2] = measureIntensitiesLobes(filepath,w,dx,dy,coordinates);
+    results(id_roi).ratio405 = intLobe1./intLobe2;
+    results(id_roi).intLobe1_405 = intLobe1;
+    results(id_roi).intLobe2_405 = intLobe2;
+    
+    % 488 nm
+    filepath = fullfile(directory_tif,roiPaths(id_roi).filename488);
+    [intLobe1,intLobe2] = measureIntensitiesLobes(filepath,w,dx,dy,coordinates);
+    results(id_roi).ratio488 = intLobe1./intLobe2;
+    results(id_roi).intLobe1_488 = intLobe1;
+    results(id_roi).intLobe2_488 = intLobe2;
+    
+    % 561 nm
+    filepath = fullfile(directory_tif,roiPaths(id_roi).filename561);
+    [intLobe1,intLobe2] = measureIntensitiesLobes(filepath,w,dx,dy,coordinates);
+    results(id_roi).ratio561 = intLobe1./intLobe2;
+    results(id_roi).intLobe1_561 = intLobe1;
+    results(id_roi).intLobe2_561 = intLobe2;
+    
+    % 638 nm
+    filepath = fullfile(directory_tif,roiPaths(id_roi).filename638);
+    [intLobe1,intLobe2] = measureIntensitiesLobes(filepath,w,dx,dy,coordinates);
+    results(id_roi).ratio638 = intLobe1./intLobe2;
+    results(id_roi).intLobe1_638 = intLobe1;
+    results(id_roi).intLobe2_638 = intLobe2;
+    
+    close all
+end
 
 
 

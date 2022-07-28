@@ -27,10 +27,10 @@ classdef Process
             img = (img - bkgnd - obj.Microscope.camOffset)./(obj.Microscope.camGain*obj.Microscope.camQE); % convert to photons
             
             [x,y] = find2DlocalisationCandidates(obj,img);
-%             figure; imshow(img,[]); colorbar; hold on; scatter(y,x,'or')
+            % figure; imshow(img,[]); colorbar; hold on; scatter(y,x,'or')
             
             locs = fit2Dlocalisations(obj,img,x,y);
-%             hold on; scatter([locs.y]*1e-9,[locs.x]*1e-9,'xg')
+            % hold on; scatter([locs.y]*1e-9,[locs.x]*1e-9,'xg')
             
             locs = groupLocalisations(obj,locs);
 
@@ -60,6 +60,9 @@ classdef Process
             [id,~] = find(tril(D));
             locs_lower_lobe = locs(id);
             
+            % check that the angle between the lobes is correct
+            % ...
+
             % get center of PSF
             locs_center = table;
             locs_center.x = ([locs_lower_lobe.x] + [locs_upper_lobe.x])/2;
@@ -423,6 +426,25 @@ classdef Process
                 tr.nextDirectory();
                 while true % read remaining frames
                     mip = min(cat(3,mip,double(tr.read())),[],3);
+                    if tr.lastDirectory(); break;
+                    else; tr.nextDirectory();
+                    end
+                end
+            end
+            close(tr)
+        end
+
+        function mip = getMaximumIntensityProjectionFromPath(filepath)
+            % GETMAXIMUMINTENSITYPROJECTIONFROMPATH Get a minimum intensity
+            % projection of a tiff stack from file.
+            tr = Tiff(filepath,'r'); % set up object for reading frame by frame
+            mip = double(tr.read()); % read first frame
+            if tr.lastDirectory()
+                return
+            else
+                tr.nextDirectory();
+                while true % read remaining frames
+                    mip = max(cat(3,mip,double(tr.read())),[],3);
                     if tr.lastDirectory(); break;
                     else; tr.nextDirectory();
                     end
