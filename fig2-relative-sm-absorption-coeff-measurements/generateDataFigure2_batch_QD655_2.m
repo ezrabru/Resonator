@@ -3,8 +3,15 @@
 clear all; close all; clc
 addpath('lib2')
 
+% PSF displacement
+dx = 0;
+dy = 37;
+lobeDist = sqrt(dx^2 + dy^2);
+wiggle = 1;
+
 numRois = 15;
-directory_tif = 'D:\manuscripts\resonator\new data\20201024_resonator quantitative\QD585'; % path to folder with tif stacks
+%directory_tif = 'D:\manuscripts\resonator\new data\20201024_resonator quantitative\QD585'; % path to folder with tif stacks
+directory_tif = fullfile(pwd,'testdata_qd585'); % path to folder with tif stacks
 directory_out = directory_tif;
 
 flagCalib = 'B405_T405';
@@ -77,8 +84,42 @@ img = double(imread(pathCalibStack));
 bkgnd = Proc.estimateBackground(pathCalibStack);
 locs = Proc.processFrame(img,bkgnd);
 
+%% Group localisations
 
+x = [locs.x]';
+y = [locs.y]';
+numLocs = numel(x);
+id = 1:numLocs;
+group_id = nan(numLocs,1);
 
+D = squareform(pdist([x y]/1e9,'euclidean'));
+
+% % remove localisations that are too close together or overlapping
+% minDist = localisationParams.w;
+% D(D < minDist) = nan;
+
+% remove localisations that can't be paired with another one considering
+% the PSF spatial arrangement
+D((D < lobeDist - wiggle)) = 0;
+D((D > lobeDist + wiggle)) = 0;
+
+% remove half of the pdist matrix (because of symmetry)
+id_lower_lobe = tril(D);
+id_upper_lobe = triu(D);
+
+[row,col] = find(triu(D));
+coord_upper_lobe = [x(row) y(col)]/1e9;
+
+[row,col] = find(tril(D));
+coord_lower_lobe = [x(row) y(col)]/1e9;
+
+group_id = 1:numel(x(row));
+
+figure
+% imshow(img,[]); hold on
+scatter(coord_upper_lobe(:,2),coord_upper_lobe(:,1),100,group_id,'s'); hold on
+scatter(coord_lower_lobe(:,2),coord_lower_lobe(:,1),100,group_id,'o');
+colormap(lines)
 
 %% Functions
 
