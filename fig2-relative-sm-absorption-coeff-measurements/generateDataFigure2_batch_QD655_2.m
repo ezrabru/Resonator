@@ -29,7 +29,7 @@ camGain = 1;
 camQE = 1;
 camPixSize = 1;
 
-bkgndEstimation.method = 'medfilt med';
+bkgndEstimation.method = 'medfilt avg';
 bkgndEstimation.params.k = 50;
 bkgndEstimation.params.frames = 10;
 
