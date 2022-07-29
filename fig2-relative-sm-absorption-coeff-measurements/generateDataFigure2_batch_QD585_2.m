@@ -7,12 +7,12 @@ addpath('lib2')
 dx = 0;
 dy = 37;
 
-numRois = 15;
-directory_tif = 'D:\manuscripts\resonator\new data\20201024_resonator quantitative\QD655'; % path to folder with tif stacks
-% directory_tif = fullfile(pwd,'testdata_qd655'); % path to folder with tif stacks
+numRois = 14;
+directory_tif = 'D:\manuscripts\resonator\new data\20201024_resonator quantitative\QD585'; % path to folder with tif stacks
+% directory_tif = fullfile(pwd,'testdata_qd585'); % path to folder with tif stacks
 directory_out = directory_tif;
 
-pathBulkSpectrum = 'D:\manuscripts\resonator\figures\figure 2\quantitative resonator\data spectra\dyes\Qdot655.txt';
+pathBulkSpectrum = 'D:\manuscripts\resonator\figures\figure 2\quantitative resonator\data spectra\dyes\Qdot585.txt';
 
 flagCalib = 'B405_T405';
 
@@ -215,9 +215,9 @@ absAt405 = y_ex(x_lambda == 405);
 % plot(x_lambda,y_em/max(y_em(:))); hold on
 
 % col = [0.1333,0.5289,0.8000]; % blue
-% col = [1.0000,0.5644,0.0622]; % orange
+col = [1.0000,0.5644,0.0622]; % orange
 % col = [0.1725,0.6275,0.1725]; % green
-col = 1.05*[0.8392,0.1529,0.1569]; % red
+% col = 1.05*[0.8392,0.1529,0.1569]; % red
 % col = [0.5804,0.4039,0.7412];
 % col = [0.5490,0.3373,0.2941];
 % col = [0.8902,0.4667,0.7608];

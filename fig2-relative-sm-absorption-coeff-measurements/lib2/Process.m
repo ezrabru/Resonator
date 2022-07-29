@@ -27,18 +27,54 @@ classdef Process
             img = (img - bkgnd - obj.Microscope.camOffset)./(obj.Microscope.camGain*obj.Microscope.camQE); % convert to photons
             
             [x,y] = find2DlocalisationCandidates(obj,img);
-            % figure; imshow(img,[]); colorbar; hold on; scatter(y,x,'or')
+%             figure; imshow(img,[]); colorbar; hold on;
             
             locs = fit2Dlocalisations(obj,img,x,y);
-            % hold on; scatter([locs.y]*1e-9,[locs.x]*1e-9,'xg')
-            
             locs = groupLocalisations(obj,locs);
+            
+            figure;
+            scatter([locs.upperLobe.y]/1e9,[locs.upperLobe.x]/1e9,30,'x'); hold on
+            scatter([locs.lowerLobe.y]/1e9,[locs.lowerLobe.x]/1e9,30,'o'); colorbar; colormap(turbo); caxis([0 360])
 
             if isempty(locs); locs = nan; end
         end
 
         function locsGrouped = groupLocalisations(obj,locs)
             %GROUPLOCALISATIONS
+            
+            % pair localisations
+            [locs_upper,locs_lower] = pairLocalisationsByDistance(obj,locs);
+            
+            % check that the angle between the lobes is correct
+            [locs_upper,locs_lower,~,~] = filterBasedOnAngle(obj,locs_upper,locs_lower);
+            
+            % re-pair localisations
+            locs = [locs_upper;locs_lower];
+            [locs_upper,locs_lower] = pairLocalisationsByDistance(obj,locs);
+
+            % check that the angle between the lobes is correct
+            [locs_upper,locs_lower,dAngle,~] = filterBasedOnAngle(obj,locs_upper,locs_lower);
+
+            % get center of PSF
+            locs_center = struct;
+            locs_center.x = ([locs_lower.x]' + [locs_upper.x]')/2;
+            locs_center.y = ([locs_lower.y]' + [locs_upper.y]')/2;
+            locs_center.photons = [locs_lower.photons]' + [locs_upper.photons]';
+            
+            locsGrouped = struct;
+            locsGrouped.upperLobe = locs_upper;
+            locsGrouped.lowerLobe = locs_lower;
+            locsGrouped.center = locs_center;
+            locsGrouped.center.angle = dAngle;
+            
+            % figure;
+            % scatter([locsGrouped.upperLobe.y]/1e9,[locsGrouped.upperLobe.x]/1e9); hold on
+            % scatter([locsGrouped.lowerLobe.y]/1e9,[locsGrouped.lowerLobe.x]/1e9)
+            % scatter([locsGrouped.center.y]/1e9,[locsGrouped.center.x]/1e9)
+        end
+        
+        function [locs_upper,locs_lower] = pairLocalisationsByDistance(obj,locs)
+            %PAIRLOCALISATIONSBYDISTANCE
             x = [locs.x]';
             y = [locs.y]';
             D = squareform(pdist([x y]/1e9,'euclidean'));
@@ -51,33 +87,28 @@ classdef Process
             % the PSF spatial arrangement
             D(D < obj.localisationParams.lobeDist - obj.localisationParams.wiggle) = 0;
             D(D > obj.localisationParams.lobeDist + obj.localisationParams.wiggle) = 0;
-
+            
             % get upper triangle
             [id,~] = find(triu(D));
-            locs_upper_lobe = locs(id);
+            locs_upper = locs(id);
             
             % get lower triangle
             [id,~] = find(tril(D));
-            locs_lower_lobe = locs(id);
-            
-            % check that the angle between the lobes is correct
-            % ...
+            locs_lower = locs(id);
+        end
 
-            % get center of PSF
-            locs_center = table;
-            locs_center.x = ([locs_lower_lobe.x] + [locs_upper_lobe.x])/2;
-            locs_center.y = ([locs_lower_lobe.y] + [locs_upper_lobe.y])/2;
-            locs_center.photons = [locs_lower_lobe.photons] + [locs_upper_lobe.photons];
+        function [locs_upper,locs_lower,dAngle,keep] = filterBasedOnAngle(obj,locs_upper,locs_lower)
+            %FILTERBASEDONANGLE
+            % check that the angle between the lobes is correct
+            dx = [locs_upper.y]' - [locs_lower.y]';
+            dy = [locs_upper.x]' - [locs_lower.x]';
+            dAngle = 180 + atan2(dy,dx)*180/pi;
             
-            locsGrouped = struct;
-            locsGrouped.upperLobe = locs_upper_lobe;
-            locsGrouped.lowerLobe = locs_lower_lobe;
-            locsGrouped.center = locs_center;
-            
-            figure;
-            scatter([locsGrouped.upperLobe.y]/1e9,[locsGrouped.upperLobe.x]/1e9); hold on
-            scatter([locsGrouped.lowerLobe.y]/1e9,[locsGrouped.lowerLobe.x]/1e9)
-            scatter([locsGrouped.center.y]/1e9,[locsGrouped.center.x]/1e9)
+            keep1 = find(dAngle > 90 - obj.localisationParams.wiggleDeg);
+            keep2 = find(dAngle < 90 + obj.localisationParams.wiggleDeg);
+            keep = intersect(keep1,keep2);
+            locs_upper = locs_upper(keep);
+            locs_lower = locs_lower(keep);
         end
 
         function bkgnd = estimateBackground(obj,filepath)
@@ -110,7 +141,7 @@ classdef Process
                         tr.nextDirectory();
                         img = double(tr.read()) - obj.Microscope.camOffset;
                         if i==1
-                            bkgnd = nan(size(img,1),size(Q00,2),params.frames);
+                            bkgnd = nan(size(img,1),size(img,2),params.frames);
                         end
                         bkgnd(:,:,i) = img;
                     end
