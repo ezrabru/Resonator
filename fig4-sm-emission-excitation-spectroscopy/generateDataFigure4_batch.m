@@ -27,10 +27,10 @@ bkgndEstimation.params.frames = 10;
 
 localisationParams.DoGsigmaSmall = 2;
 localisationParams.DoGsigmaLarge = 3;
-localisationParams.DoGminThreshold = 300;
+localisationParams.DoGminThreshold = 200;
 localisationParams.method = 'asymmetric gaussian';
 localisationParams.w = 7;
-localisationParams.wiggle = 2;
+localisationParams.wiggle = 4;
 localisationParams.wiggleDeg = 5;
 localisationParams.lobeDist = sqrt(dx^2 + dy^2);
 
@@ -52,30 +52,11 @@ warning('off')
 w = 3;
 results = {};
 
-% perform localisation on the MIP of the datasets
-for i=1:numel(filelist)
-    fprintf('Processing file %d/%d\n',i,numel(filelist))
-    filepath = fullfile(filelist(i).folder,filelist(i).name);
-    avg_i = Proc.getAverageIntensityProjectionFromPath(filepath);
-    imshow(avg_i,[]); pause(1)
-    if i == 1
-        avg = avg_i;
-    else
-        avg = cat(3,avg,avg_i);
-    end
-end
-
-
-%%
-
-avg_combined = sum(avg,3);
-
-locs = Proc.processFrame(avg_combined,0);
+% get localisations
+filepath = fullfile(filelist(1).folder,filelist(1).name);
+avg = Proc.getMaximumIntensityProjectionFromPath(filepath);
+locs = Proc.processFrame(avg,0);
 locs = struct2table(locs);
-
-
-
-%%
 
 % split based on sigma into resonator and third lobes
 threshold_sigmay = 1.7;
@@ -85,18 +66,14 @@ locs_dichroic = locs(locs.sigmay <= threshold_sigmay,:); locs_dichroic = table2s
 % group the resonator lobes based on distance
 locs_resonator = table2struct(locs_resonator);
 [locs_upper,locs_lower] = Proc.pairLocalisationsByDistance(locs_resonator);
-[locs_upper,locs_lower,dAngle,keep] = Proc.filterBasedOnAngle(locs_upper,locs_lower);
-[locs_upper,locs_lower] = Proc.pairLocalisationsByDistance([locs_upper; locs_lower]);
 
 % loop over each upper lobe and check if there is a matching lower (and
 % that it is not accidentally a lower lobe...)
 groupedLocs = struct;
 numUpperLocs = numel(locs_upper);
 
-%%
-clc
 figure;
-imshow(mip,[]); hold on
+imshow(avg,[]); hold on
 for i = 1:numUpperLocs
     x_i = locs_upper(i).x/1e9;
     y_i = locs_upper(i).y/1e9;
@@ -112,7 +89,7 @@ for i = 1:numUpperLocs
         y_i_dc = y_i + dx3;
         D = sqrt(([locs_dichroic.x]/1e9 - x_i_dc).^2 + ([locs_dichroic.y]/1e9 - y_i_dc).^2);
         [D_min_3l,id_D_min_3l] = min(D);
-        if D_min_3l <= 4*localisationParams.wiggle % third lobe was also found
+        if D_min_3l <= localisationParams.wiggle % third lobe was also found
             locsGrouped(i).upperLobe.x = x_i;
             locsGrouped(i).upperLobe.y = y_i;
             locsGrouped(i).lowerLobe.x = locs_lower(id_D_min_ll).x;
@@ -130,6 +107,15 @@ for i = 1:numUpperLocs
 end
 legend('upper lobe','lower lobe','third lobe')
 
+
+%%
+
+% NEXT STEP IS TO RUN OVER THE FILES AND ANALYSE THOSE ONE BY ONE,
+% COMBINING THE RESULTS.
+
+% CAN YOU PLOT THE RATE OF BLUEING (IN EMISSION AND EXCITATION)?
+
+% REPEAT FOR MORE REGIONS?
 
 %%
 
