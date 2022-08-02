@@ -475,6 +475,7 @@ classdef Process
             if tr.lastDirectory()
                 return
             else
+                disp('hello')
                 tr.nextDirectory();
                 while true % read remaining frames
                     mip = max(cat(3,mip,double(tr.read())),[],3);

@@ -54,28 +54,23 @@ results = {};
 
 % perform localisation on the MIP of the datasets
 for i=1:numel(filelist)
-    fprintf('Processing file %d/%d\n',i,numel(filelist))
     filepath = fullfile(filelist(i).folder,filelist(i).name);
-    avg_i = Proc.getAverageIntensityProjectionFromPath(filepath);
-    imshow(avg_i,[]); pause(1)
     if i == 1
-        avg = avg_i;
+        mip = Proc.getMaximumIntensityProjectionFromPath(filepath);
     else
-        avg = cat(3,avg,avg_i);
+        mip_i = Proc.getMaximumIntensityProjectionFromPath(filepath);
+        mip = cat(3,mip_i);
     end
 end
-
+mip = max(mip,3);
 
 %%
 
-avg_combined = sum(avg,3);
-
-locs = Proc.processFrame(avg_combined,0);
+locs = Proc.processFrame(mip,0);
 locs = struct2table(locs);
 
-
-
 %%
+clc
 
 % split based on sigma into resonator and third lobes
 threshold_sigmay = 1.7;
