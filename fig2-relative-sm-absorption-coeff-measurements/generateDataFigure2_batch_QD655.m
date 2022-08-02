@@ -14,6 +14,7 @@ directory_out = directory_tif;
 
 pathBulkSpectrum = 'D:\manuscripts\resonator\figures\figure 2\quantitative resonator\data spectra\dyes\Qdot655.txt';
 
+
 flagCalib = 'B405_T405';
 
 flag405 = 'B405_T405';
@@ -241,6 +242,105 @@ savefig(fig,fullfile(directory_out,'estimatedExcitationSpectra.fig'))
 exportgraphics(fig,fullfile(directory_out,'estimatedExcitationSpectra.png'),'Resolution',400)
 set(gcf,'renderer','Painters')
 exportgraphics(fig,fullfile(directory_out,'estimatedExcitationSpectra.eps'))
+
+%% Generate dark mode figure
+
+intensityThreshold = 20e4;
+
+wavelenghts = [405 488 561 638];
+factorPower = [1 1 1 1];
+correctionFactor = factorPower.*(405./wavelenghts);
+
+meanRatio405 = [];
+meanRatio488 = [];
+meanRatio561 = [];
+meanRatio638 = [];
+
+numQDots = 0;
+fig = figure('position',[50 50 350 300]);
+set(0,'DefaultAxesTitleFontWeight','normal');
+
+for id_roi = 1:numRois
+    numLocs = size(results(id_roi).ratio405,2);
+    for i=1:numLocs
+        
+        keep = logical(results(id_roi).intLobe2_405(:,i) > intensityThreshold);
+        if sum(keep(:))
+            ratio1 = results(id_roi).ratio405(:,i);
+            ratio1 = nanmedian(ratio1(keep));
+            meanRatio405 = [meanRatio405 ratio1];
+    
+            keep = logical(results(id_roi).intLobe2_488(:,i) > intensityThreshold);
+            if sum(keep(:))
+                ratio2 = results(id_roi).ratio488(:,i);
+                ratio2 = nanmedian(ratio2(keep));
+                meanRatio488 = [meanRatio488 ratio2];
+        
+                keep = logical(results(id_roi).intLobe2_561(:,i) > intensityThreshold);
+                if sum(keep(:))
+                    ratio3 = results(id_roi).ratio561(:,i);
+                    ratio3 = nanmedian(ratio3(keep));
+                    meanRatio561 = [meanRatio561 ratio3];
+            
+                    keep = logical(results(id_roi).intLobe2_638(:,i) > intensityThreshold);
+                    if sum(keep(:))
+                        ratio4 = results(id_roi).ratio638(:,i);
+                        ratio4 = nanmedian(ratio4(keep));
+                        meanRatio638 = [meanRatio638 ratio4];
+                
+                        ratios = [ratio1 ratio2 ratio3 ratio4];
+                        ratios = correctionFactor./ratios;
+                        plot(wavelenghts,ratios,'-','color',0.5*[1 1 1 0.4])
+                        hold on
+                        
+                        numQDots = numQDots + 1;
+                    end
+                end
+            end
+        end
+    end
+end
+
+spectrumBulk = readmatrix(pathBulkSpectrum);
+x_lambda = spectrumBulk(:,1);
+y_ex = spectrumBulk(:,2);
+y_em = spectrumBulk(:,3);
+
+absAt405 = y_ex(x_lambda == 405);
+
+% plot(x_lambda,y_em/max(y_em(:))); hold on
+
+% col = [0.1333,0.5289,0.8000]; % blue
+% col = [1.0000,0.5644,0.0622]; % orange
+% col = [0.1725,0.6275,0.1725]; % green
+col = 1.05*[0.8392,0.1529,0.1569]; % red
+% col = [0.5804,0.4039,0.7412];
+% col = [0.5490,0.3373,0.2941];
+% col = [0.8902,0.4667,0.7608];
+plot(x_lambda,y_ex/absAt405,'-','Color',col,'linewidth',2); hold on
+
+xlim([350 700])
+ylim([0,1.2])
+xticks(200:50:800)
+hold on
+meanRatios = [nanmedian(meanRatio405) nanmedian(meanRatio488) nanmedian(meanRatio561) nanmedian(meanRatio638)];
+meanRatios = correctionFactor./meanRatios;
+plot(wavelenghts,meanRatios,'w-o','linewidth',1)
+
+grid on
+xlabel('Excitation wavelength (nm)');
+ylabel('Ratio intensity lobe2/lobe1');
+title([num2str(numQDots) ' quantum dots, ' num2str(numRois) ' rois'],'Color','w')
+set(gca,'FontSize',9)
+
+% edit the figure to be dark mode and save again
+set(gcf,'Color','k')
+set(gca,'xColor','w','yColor','w','Color','k')
+
+savefig(fig,fullfile(directory_out,'estimatedExcitationSpectra_darkMode.fig'))
+exportgraphics(fig,fullfile(directory_out,'estimatedExcitationSpectra_darkMode.png'),'Resolution',400)
+set(gcf,'renderer','Painters')
+exportgraphics(fig,fullfile(directory_out,'estimatedExcitationSpectra_darkMode.eps'))
 
 %% Functions
 
