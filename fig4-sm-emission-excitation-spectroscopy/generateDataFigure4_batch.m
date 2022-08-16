@@ -10,7 +10,7 @@ dy = 37;
 dx3 = 28;
 dy3 = 16.5;
 
-directory_tif = 'D:\manuscripts\resonator\new data\20201013_resonator 3 lobe\split\roi8'; % path to folder with tif stacks
+directory_tif = 'D:\manuscripts\resonator\new data\20201013_resonator 3 lobe\split\roi1'; % path to folder with tif stacks
 directory_out = directory_tif;
 
 NA = 1.49;
@@ -81,10 +81,9 @@ locsGrouped.thirdLobe = table;
 locs_upper = unique(locs_upper,'stable');
 numUpperLocs = height(locs_upper);
 
-cols = lines(3);
-col1 = cols(1,:);
-col2 = cols(2,:);
-col3 = cols(3,:);
+col1 = 1.05*[0.8392,0.1529,0.1569]; % red
+col2 = [0.1333,0.5289,0.8000]; % blue
+col3 = 0.8*[1 1 1];
 
 ms = 80;
 
@@ -236,100 +235,112 @@ save(fullfile(directory_out,'results_curated.m'),'results_curated')
 
 %% plot intensity traces
 
-% cols = lines(3);
-% alpha = 0.8;
-% 
-% for i=1:size(I_upperLobe,2)
-%     fig = figure('Position',[200,500,1080,200]);
-%     plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',[cols(1,:) alpha]); hold on
-%     plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',[cols(2,:) alpha]);
-%     plot(results_curated.thirdLobe(i).intensityTrace,'Color',[cols(3,:) alpha]); hold on
-%     legend('upper','lower','third')
-%     xlabel('Time (frames)'); ylabel('Intensity (adu)');
-% 
-%     % save figure light mode
-%     savefig(fig,fullfile(directory_out,sprintf('traces_lightMode_id%d.fig',i)))
-%     exportgraphics(fig,fullfile(directory_out,sprintf('traces_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
-%     set(gcf,'renderer','Painters')
-%     exportgraphics(fig,fullfile(directory_out,sprintf('traces_lightMode_id%d.eps',i)))
-%     
-%     % save annotated figure dark mode
-%     set(gcf,'Color','k')
-%     set(gca,'Color','k','xColor','w','yColor','w')
-%     legend('Color','k','TextColor','w','EdgeColor','w')
-%     title(filename,'Interpreter','none','FontWeight','normal','Color','w')
-%     savefig(fig,fullfile(directory_out,sprintf('traces_darkMode_id%d.fig',i)))
-%     exportgraphics(fig,fullfile(directory_out,sprintf('traces_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
-%     set(gcf,'renderer','Painters')
-%     exportgraphics(fig,fullfile(directory_out,sprintf('traces_darkMode_id%d.eps',i)),'BackgroundColor','k')
-%     
-%     close all
-% end
+% Create new output folder
+directory_out_traces = fullfile(directory_out,'traces');
+if ~exist(directory_out_traces,'dir'); mkdir(directory_out_traces); end
+
+alpha = 0.8;
+
+for i=1:size(I_upperLobe,2)
+% for i=1:1
+    fig = figure('Position',[200,500,1080,200]);
+    plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',[col1 alpha]); hold on
+    plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',[col2 alpha]);
+    plot(results_curated.thirdLobe(i).intensityTrace,'Color',[col3 alpha]); hold on
+    title(sprintf('%s, QDot %d',filename,i),'Interpreter','none','FontWeight','normal')
+    legend('upper','lower','third','Location','bestoutside'); set(gca,'Layer','Top'); box off
+    xlabel('Time (frames)'); ylabel('Intensity (adu)');
+
+    % save figure light mode
+    savefig(fig,fullfile(directory_out_traces,sprintf('traces_lightMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out_traces,sprintf('traces_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
+    set(gcf,'renderer','Painters')
+    exportgraphics(fig,fullfile(directory_out_traces,sprintf('traces_lightMode_id%d.eps',i)))
+    
+    % save annotated figure dark mode
+    set(gcf,'Color','k')
+    set(gca,'Color','k','xColor','w','yColor','w')
+    legend('Color','k','TextColor','w','EdgeColor','w')
+    title(sprintf('%s, QDot %d',filename,i),'Interpreter','none','FontWeight','normal','Color','w')
+    savefig(fig,fullfile(directory_out_traces,sprintf('traces_darkMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out_traces,sprintf('traces_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
+    set(gcf,'renderer','Painters')
+    exportgraphics(fig,fullfile(directory_out_traces,sprintf('traces_darkMode_id%d.eps',i)),'BackgroundColor','k')
+    
+    close all
+end
 
 %% plot scatter plots
 
-% alpha = 0.2;
-% min_total = -1e5; % minimum value used for axis limits
-% 
-% for i=1:size(I_upperLobe,2)
-%     fig = figure('Position',[300,300,1300,350]);
-%     
-%     x = results_curated.upperLobe(i).intensityTrace;
-%     y = results_curated.lowerLobe(i).intensityTrace;
-%     z = results_curated.thirdLobe(i).intensityTrace;
-%     c = 1:numel(x);
-% 
-%     max_res = max([x;y]);
-%     max_third = max(z);
-%     max_total = max([max_res max_third]);
-% 
-%     subplot(1,3,1)
-%     scatter(y,x,10,c,'filled','MarkerFaceAlpha',alpha)
-%     xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-%     xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
-%     colormap turbo; c1 = colorbar; c1.Label.String = 'Frame';
-% 
-%     subplot(1,3,2)
-%     scatter(z,x,10,c,'filled','MarkerFaceAlpha',alpha)
-%     xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-%     xlabel('Intensity third lobe'); ylabel('Intensity upper lobe');
-%     colormap turbo; c2 = colorbar; c2.Label.String = 'Frame';
-%     
-%     subplot(1,3,3)
-%     scatter(z,y,10,c,'filled','MarkerFaceAlpha',alpha)
-%     xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-%     xlabel('Intensity third lobe'); ylabel('Intensity lower lobe');
-%     colormap turbo; c3 = colorbar; c3.Label.String = 'Frame';
-% 
-%     % save figure light mode
-%     sgtitle(filename,'Interpreter','none','FontWeight','normal')
-%     savefig(fig,fullfile(directory_out,sprintf('scatter_lightMode_id%d.fig',i)))
-%     exportgraphics(fig,fullfile(directory_out,sprintf('scatter_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
-%     set(gcf,'renderer','Painters')
-%     exportgraphics(fig,fullfile(directory_out,sprintf('scatter_lightMode_id%d.eps',i)))
-%     
-%     % save annotated figure dark mode
-%     set(gcf,'Color','k')
-%     subplot(1,3,1); set(gca,'Color','k','xColor','w','yColor','w'); c1.Color = 'w';
-%     subplot(1,3,2); set(gca,'Color','k','xColor','w','yColor','w'); c2.Color = 'w';
-%     subplot(1,3,3); set(gca,'Color','k','xColor','w','yColor','w'); c3.Color = 'w';
-%     sgtitle(filename,'Interpreter','none','FontWeight','normal','Color','w')
-%     savefig(fig,fullfile(directory_out,sprintf('scatter_darkMode_id%d.fig',i)))
-%     exportgraphics(fig,fullfile(directory_out,sprintf('scatter_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
-%     set(gcf,'renderer','Painters')
-%     exportgraphics(fig,fullfile(directory_out,sprintf('scatter_darkMode_id%d.eps',i)),'BackgroundColor','k')
-%     
-%     close all
-% end
-
-%% Overview plot lightMode
+% Create new output folder
+directory_out_scatter = fullfile(directory_out,'scatter');
+if ~exist(directory_out_scatter,'dir'); mkdir(directory_out_scatter); end
 
 alpha = 0.2;
 min_total = -1e5; % minimum value used for axis limits
 
 for i=1:size(I_upperLobe,2)
 % for i=1:1
-    fig = figure('Position',[50,50,1660,650]);
+    fig = figure('Position',[300,300,1300,350]);
+    
+    x = results_curated.upperLobe(i).intensityTrace;
+    y = results_curated.lowerLobe(i).intensityTrace;
+    z = results_curated.thirdLobe(i).intensityTrace;
+    c = 1:numel(x);
+
+    max_res = max([x;y]);
+    max_third = max(z);
+    max_total = max([max_res max_third]);
+
+    subplot(1,3,1)
+    scatter(y,x,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
+    colormap turbo; c1 = colorbar; c1.Label.String = 'Frame';
+
+    subplot(1,3,2)
+    scatter(z,x,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    xlabel('Intensity third lobe'); ylabel('Intensity upper lobe');
+    colormap turbo; c2 = colorbar; c2.Label.String = 'Frame';
+    
+    subplot(1,3,3)
+    scatter(z,y,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    xlabel('Intensity third lobe'); ylabel('Intensity lower lobe');
+    colormap turbo; c3 = colorbar; c3.Label.String = 'Frame';
+
+    % save figure light mode
+    sgtitle(sprintf('%s, QDot %d',filename,i),'Interpreter','none','FontWeight','normal')
+    savefig(fig,fullfile(directory_out_scatter,sprintf('scatter_lightMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out_scatter,sprintf('scatter_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
+    set(gcf,'renderer','Painters')
+    exportgraphics(fig,fullfile(directory_out_scatter,sprintf('scatter_lightMode_id%d.eps',i)))
+    
+    % save annotated figure dark mode
+    set(gcf,'Color','k')
+    subplot(1,3,1); set(gca,'Color','k','xColor','w','yColor','w'); c1.Color = 'w';
+    subplot(1,3,2); set(gca,'Color','k','xColor','w','yColor','w'); c2.Color = 'w';
+    subplot(1,3,3); set(gca,'Color','k','xColor','w','yColor','w'); c3.Color = 'w';
+    sgtitle(sprintf('%s, QDot %d',filename,i),'Interpreter','none','FontWeight','normal','Color','w')
+    savefig(fig,fullfile(directory_out_scatter,sprintf('scatter_darkMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out_scatter,sprintf('scatter_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
+    set(gcf,'renderer','Painters')
+    exportgraphics(fig,fullfile(directory_out_scatter,sprintf('scatter_darkMode_id%d.eps',i)),'BackgroundColor','k')
+    
+    close all
+end
+
+%% Overview plot lightMode
+
+alpha = 0.2;
+min_total = -1e5; % minimum value used for axis limits
+
+colourcode_axislabels = 0;
+
+for i=1:size(I_upperLobe,2)
+% for i=1:1
+    fig = figure('Position',[50,50,1660,600]);
     
     t = tiledlayout(2,5);
 
@@ -342,32 +353,6 @@ for i=1:size(I_upperLobe,2)
     max_third = max(z);
     max_total = max([max_res max_third]);
 
-    nexttile([1 3])
-    plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',[cols(1,:) 1]); hold on
-    plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',[cols(2,:) 1]);
-    plot(results_curated.thirdLobe(i).intensityTrace,'Color',[cols(3,:) 1]); hold on
-    box off
-    legend('upper','lower','third')
-    xlabel('Time (frames)'); ylabel('Intensity (adu)');
-
-    nexttile(6)
-    scatter(y,x,10,c,'filled','MarkerFaceAlpha',alpha)
-    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-    xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
-    colormap turbo; c1 = colorbar; c1.Label.String = 'Frame';
-    
-    nexttile(7)
-    scatter(z,x,10,c,'filled','MarkerFaceAlpha',alpha)
-    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-    xlabel('Intensity third lobe'); ylabel('Intensity upper lobe');
-    colormap turbo; c2 = colorbar; c2.Label.String = 'Frame';
-    
-    nexttile(8)
-    scatter(z,y,10,c,'filled','MarkerFaceAlpha',alpha)
-    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-    xlabel('Intensity third lobe'); ylabel('Intensity lower lobe');
-    colormap turbo; c3 = colorbar; c3.Label.String = 'Frame';
-
     nexttile([2 2])
     mip_rgb = uint8(255*results_curated.mip./max(results_curated.mip(:)));
     mip_rgb = cat(3,mip_rgb,mip_rgb,mip_rgb);
@@ -379,10 +364,51 @@ for i=1:size(I_upperLobe,2)
     x_text = (results_curated.upperLobe(i).y/1e9 + results_curated.lowerLobe(i).y/1e9)/2; 
     y_text = (results_curated.upperLobe(i).x/1e9 + results_curated.lowerLobe(i).x/1e9)/2; 
     text(x_text,y_text,sprintf('%d',i),'Color','w')
+    title(sprintf('%s, QDot %d',filename,i),'Fontweight','normal','Interpreter','none')
+
+    nexttile([1 3])
+    plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',col1); hold on
+    plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',col2);
+    plot(results_curated.thirdLobe(i).intensityTrace,'Color',col3); hold on
+    box off
+    legend('upper','lower','third','Location','bestoutside')
+    xlabel('Time (frames)'); ylabel('Intensity (adu)');
+
+    nexttile(8)
+    scatter(y,x,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    if colourcode_axislabels
+        xlabel('Intensity lower lobe','Color',col2);
+        ylabel('Intensity upper lobe','Color',col1);
+    else
+        xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
+    end
+    colormap turbo; c1 = colorbar; c1.Label.String = 'Frame';
+    
+    nexttile(9)
+    scatter(z,x,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    if colourcode_axislabels
+        xlabel('Intensity third lobe','Color',col3);
+        ylabel('Intensity upper lobe','Color',col1);
+    else
+        xlabel('Intensity third lobe'); ylabel('Intensity upper lobe');
+    end
+    colormap turbo; c2 = colorbar; c2.Label.String = 'Frame';
+    
+    nexttile(10)
+    scatter(z,y,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    if colourcode_axislabels
+        xlabel('Intensity third lobe','Color',col3);
+        ylabel('Intensity lower lobe','Color',col2);
+    else
+        xlabel('Intensity third lobe'); ylabel('Intensity lower lobe');
+    end
+    colormap turbo; c3 = colorbar; c3.Label.String = 'Frame';
     pause(0.01)
 
     % save figure light mode
-    sgtitle(filename,'Interpreter','none','FontWeight','normal')
     savefig(fig,fullfile(directory_out,sprintf('overview_lightMode_id%d.fig',i)))
     exportgraphics(fig,fullfile(directory_out,sprintf('overview_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
     set(gcf,'renderer','Painters')
@@ -396,9 +422,11 @@ end
 alpha = 0.2;
 min_total = -1e5; % minimum value used for axis limits
 
+colourcode_axislabels = 0;
+
 for i=1:size(I_upperLobe,2)
 % for i=1:1
-    fig = figure('Position',[50,50,1660,650]);
+    fig = figure('Position',[50,50,1660,600]);
     
     t = tiledlayout(2,5);
     set(gcf,'Color','k')
@@ -412,36 +440,6 @@ for i=1:size(I_upperLobe,2)
     max_third = max(z);
     max_total = max([max_res max_third]);
 
-    nexttile([1 3])
-    plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',[cols(1,:) 1]); hold on
-    plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',[cols(2,:) 1]);
-    plot(results_curated.thirdLobe(i).intensityTrace,'Color',[cols(3,:) 1]); hold on
-    box off
-    legend('upper','lower','third','TextColor','w','EdgeColor','w','Color','k')
-    xlabel('Time (frames)'); ylabel('Intensity (adu)');
-    set(gca,'Color','k','xColor','w','yColor','w');
-
-    nexttile(6)
-    scatter(y,x,10,c,'filled','MarkerFaceAlpha',alpha)
-    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-    xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
-    colormap turbo; c1 = colorbar; c1.Label.String = 'Frame'; c1.Color = 'w';
-    set(gca,'Color','k','xColor','w','yColor','w');
-    
-    nexttile(7)
-    scatter(z,x,10,c,'filled','MarkerFaceAlpha',alpha)
-    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-    xlabel('Intensity third lobe'); ylabel('Intensity upper lobe');
-    colormap turbo; c2 = colorbar; c2.Label.String = 'Frame'; c2.Color = 'w';
-    set(gca,'Color','k','xColor','w','yColor','w');
-    
-    nexttile(8)
-    scatter(z,y,10,c,'filled','MarkerFaceAlpha',alpha)
-    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
-    xlabel('Intensity third lobe'); ylabel('Intensity lower lobe');
-    colormap turbo; c3 = colorbar; c3.Label.String = 'Frame'; c3.Color = 'w';
-    set(gca,'Color','k','xColor','w','yColor','w');
-
     nexttile([2 2])
     mip_rgb = uint8(255*results_curated.mip./max(results_curated.mip(:)));
     mip_rgb = cat(3,mip_rgb,mip_rgb,mip_rgb);
@@ -453,87 +451,179 @@ for i=1:size(I_upperLobe,2)
     x_text = (results_curated.upperLobe(i).y/1e9 + results_curated.lowerLobe(i).y/1e9)/2; 
     y_text = (results_curated.upperLobe(i).x/1e9 + results_curated.lowerLobe(i).x/1e9)/2; 
     text(x_text,y_text,sprintf('%d',i),'Color','w')
-    pause(0.01)
+    title(sprintf('%s, QDot %d',filename,i),'Fontweight','normal','Interpreter','none','Color','w')
+
+    nexttile([1 3])
+    plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',col1); hold on
+    plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',col2);
+    plot(results_curated.thirdLobe(i).intensityTrace,'Color',col3); hold on
+    box off
+    legend('upper','lower','third','TextColor','w','EdgeColor','w','Color','k','Location','bestoutside')
+    xlabel('Time (frames)'); ylabel('Intensity (adu)');
+    set(gca,'Color','k','xColor','w','yColor','w');
+
+    nexttile(8)
+    scatter(y,x,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    colormap turbo; c1 = colorbar; c1.Label.String = 'Frame'; c1.Color = 'w';
+    set(gca,'Color','k','xColor','w','yColor','w');
+    if colourcode_axislabels
+        xlabel('Intensity lower lobe','Color',col2);
+        ylabel('Intensity upper lobe','Color',col1);
+    else
+        xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
+    end
+    
+    nexttile(9)
+    scatter(z,x,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    colormap turbo; c2 = colorbar; c2.Label.String = 'Frame'; c2.Color = 'w';
+    set(gca,'Color','k','xColor','w','yColor','w');
+    if colourcode_axislabels
+        xlabel('Intensity third lobe','Color',col3);
+        ylabel('Intensity upper lobe','Color',col1);
+    else
+        xlabel('Intensity third lobe'); ylabel('Intensity upper lobe');
+    end
+
+    nexttile(10)
+    scatter(z,y,10,c,'filled','MarkerFaceAlpha',alpha)
+    xlim([min_total max_total]); ylim([min_total max_total]); axis square; grid on
+    colormap turbo; c3 = colorbar; c3.Label.String = 'Frame'; c3.Color = 'w';
+    set(gca,'Color','k','xColor','w','yColor','w');
+    if colourcode_axislabels
+        xlabel('Intensity third lobe','Color',col3);
+        ylabel('Intensity lower lobe','Color',col2);
+    else
+        xlabel('Intensity third lobe'); ylabel('Intensity lower lobe');
+    end
+
+    pause(0.001)
  
     % save annotated figure dark mode
-    sgtitle(filename,'Interpreter','none','FontWeight','normal','Color','w')
-    savefig(fig,fullfile(directory_out,sprintf('scatter_darkMode_id%d.fig',i)))
-    exportgraphics(fig,fullfile(directory_out,sprintf('scatter_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
+    savefig(fig,fullfile(directory_out,sprintf('overview_darkMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out,sprintf('overview_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
     set(gcf,'renderer','Painters')
-    exportgraphics(fig,fullfile(directory_out,sprintf('scatter_darkMode_id%d.eps',i)),'BackgroundColor','k')
-%     
+    exportgraphics(fig,fullfile(directory_out,sprintf('overview_darkMode_id%d.eps',i)),'BackgroundColor','k')
+
     close all
 end
 
-% %% plot ratios
-% 
-% minIntThreshold = 0.75e5;
-% 
-% cols = lines(3);
-% alpha = 0.5;
-% ms = 1;
-% 
+%% plot ratios
+
+minIntThreshold = 2e5;
+
+alpha = 0.5;
+ms = 1;
+
 % for i=1:size(I_upperLobe,2)
-%     fig = figure('Position',[200,200,1080,650]);
-%     
-%     subplot(4,1,1)
-%     plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',[cols(1,:) 1]); hold on
-%     plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',[cols(2,:) 1]);
-%     plot(results_curated.thirdLobe(i).intensityTrace,'Color',[cols(3,:) 1]); hold on
-%     box off
-%     legend('upper','lower','third')
-%     xlabel('Time (frames)'); ylabel('Intensity (adu)');
-% 
-%     totalInt = results_curated.upperLobe(i).intensityTrace + results_curated.lowerLobe(i).intensityTrace + results_curated.thirdLobe(i).intensityTrace;
-%     t = 1:numel(totalInt);
-%     keep = totalInt > minIntThreshold;
-% 
-%     subplot(4,1,2)
-%     scatter(t(keep),results_curated.upperLobe(i).intensityTrace(keep)./totalInt(keep),ms,cols(1,:),'o','filled','MarkerFaceAlpha',alpha); hold on
-%     scatter(t(keep),results_curated.lowerLobe(i).intensityTrace(keep)./totalInt(keep),ms,cols(2,:),'o','filled','MarkerFaceAlpha',alpha);
-%     scatter(t(keep),results_curated.thirdLobe(i).intensityTrace(keep)./totalInt(keep),ms,cols(3,:),'o','filled','MarkerFaceAlpha',alpha);
-%     ylim([-0.2 1.2]); xlim([0 numel(totalInt)]); grid on;
-%     xlabel('Time (frame)'); ylabel('Intensity fraction')
-%     legend('% upper','% lower','% third','location','northeast')
-% 
-%     subplot(4,1,3)
-%     totalIntResonator = results_curated.upperLobe(i).intensityTrace + results_curated.lowerLobe(i).intensityTrace;
-%     scatter(t(keep),results_curated.upperLobe(i).intensityTrace(keep)./totalIntResonator(keep),ms,cols(1,:),'o','filled','MarkerFaceAlpha',alpha);hold on
-%     scatter(t(keep),results_curated.lowerLobe(i).intensityTrace(keep)./totalIntResonator(keep),ms,cols(2,:),'o','filled','MarkerFaceAlpha',alpha);
-%     ylim([-0.2 1.2]); xlim([0 numel(totalInt)]); grid on
-%     xlabel('Time (frame)'); ylabel('Intensity fraction')
-%     legend('% upper resonator','% lower resonator','location','northeast')
-% 
-%     subplot(4,1,4)
-%     scatter(t(keep),totalIntResonator(keep)./totalInt(keep),ms,(cols(1,:)+cols(2,:))/2,'o','filled','MarkerFaceAlpha',alpha); hold on
-%     scatter(t(keep),results_curated.thirdLobe(i).intensityTrace(keep)./totalInt(keep),ms,cols(3,:),'o','filled','MarkerFaceAlpha',alpha);
-%     ylim([-0.2 1.2]); xlim([0 numel(totalInt)]); grid on
-%     xlabel('Time (frame)'); ylabel('Intensity fraction')
-%     legend('% resonator','% lower','% third','location','northeast')
-% 
-%     % save figure light mode
-%     sgtitle(filename,'Interpreter','none','FontWeight','normal')
-%     savefig(fig,fullfile(directory_out,sprintf('ratioTraces_lightMode_id%d.fig',i)))
-%     exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
-%     set(gcf,'renderer','Painters')
-%     exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_lightMode_id%d.eps',i)))
-%     
-%     % save annotated figure dark mode
-%     set(gcf,'Color','k')
-%     subplot(4,1,1); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
-%     subplot(4,1,2); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
-%     subplot(4,1,3); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
-%     subplot(4,1,4); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
-%     sgtitle(filename,'Interpreter','none','FontWeight','normal','Color','w')
-%     savefig(fig,fullfile(directory_out,sprintf('ratioTraces_darkMode_id%d.fig',i)))
-%     exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
-%     set(gcf,'renderer','Painters')
-%     exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_darkMode_id%d.eps',i)),'BackgroundColor','k')
-%     
+for i=1:1
+    fig = figure('Position',[200,200,1080,650]);
+    
+    subplot(4,1,1)
+    plot(results_curated.upperLobe(i).intensityTrace + 20e5,'Color',col1); hold on
+    plot(results_curated.lowerLobe(i).intensityTrace + 10e5,'Color',col2);
+    plot(results_curated.thirdLobe(i).intensityTrace,'Color',col3); hold on
+    box off
+    legend('upper','lower','third')
+    xlabel('Time (frames)'); ylabel('Intensity (adu)');
+    title(sprintf('%s, QDot %d',filename,i),'Interpreter','none','FontWeight','normal')
+
+    totalInt = results_curated.upperLobe(i).intensityTrace + results_curated.lowerLobe(i).intensityTrace + results_curated.thirdLobe(i).intensityTrace;
+    t = 1:numel(totalInt);
+    keep = totalInt > minIntThreshold;
+
+    subplot(4,1,2)
+    scatter(t(keep),results_curated.upperLobe(i).intensityTrace(keep)./totalInt(keep),ms,col1,'o','filled','MarkerFaceAlpha',alpha); hold on
+    scatter(t(keep),results_curated.lowerLobe(i).intensityTrace(keep)./totalInt(keep),ms,col2,'o','filled','MarkerFaceAlpha',alpha);
+    scatter(t(keep),results_curated.thirdLobe(i).intensityTrace(keep)./totalInt(keep),ms,col3,'o','filled','MarkerFaceAlpha',alpha);
+    ylim([-0.2 1.2]); xlim([0 numel(totalInt)]); grid on;
+    xlabel('Time (frame)'); ylabel('Intensity fraction')
+    legend('% upper','% lower','% third')
+
+    subplot(4,1,3)
+    totalIntResonator = results_curated.upperLobe(i).intensityTrace + results_curated.lowerLobe(i).intensityTrace;
+    scatter(t(keep),results_curated.upperLobe(i).intensityTrace(keep)./totalIntResonator(keep),ms,col1,'o','filled','MarkerFaceAlpha',alpha);hold on
+    scatter(t(keep),results_curated.lowerLobe(i).intensityTrace(keep)./totalIntResonator(keep),ms,col2,'o','filled','MarkerFaceAlpha',alpha);
+    ylim([-0.2 1.2]); xlim([0 numel(totalInt)]); grid on
+    xlabel('Time (frame)'); ylabel('Intensity fraction')
+    legend('% upper resonator','% lower resonator')
+
+    subplot(4,1,4)
+    scatter(t(keep),totalIntResonator(keep)./totalInt(keep),ms,(col1+col2)/2,'o','filled','MarkerFaceAlpha',alpha); hold on
+    scatter(t(keep),results_curated.thirdLobe(i).intensityTrace(keep)./totalInt(keep),ms,col3,'o','filled','MarkerFaceAlpha',alpha);
+    ylim([-0.2 1.2]); xlim([0 numel(totalInt)]); grid on
+    xlabel('Time (frame)'); ylabel('Intensity fraction')
+    legend('% resonator','% lower','% third')
+
+    % save figure light mode
+    savefig(fig,fullfile(directory_out,sprintf('ratioTraces_lightMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_lightMode_id%d.png',i)),'Resolution',400,'BackgroundColor','w')
+    set(gcf,'renderer','Painters')
+    exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_lightMode_id%d.eps',i)))
+    
+    % save annotated figure dark mode
+    set(gcf,'Color','k')
+    subplot(4,1,1); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w'); title(sprintf('%s, QDot %d',filename,i),'Interpreter','none','FontWeight','normal','Color','w')
+    subplot(4,1,2); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
+    subplot(4,1,3); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
+    subplot(4,1,4); set(gca,'Color','k','xColor','w','yColor','w'); legend('Color','k','TextColor','w','EdgeColor','w')
+    savefig(fig,fullfile(directory_out,sprintf('ratioTraces_darkMode_id%d.fig',i)))
+    exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_darkMode_id%d.png',i)),'Resolution',400,'BackgroundColor','k')
+    set(gcf,'renderer','Painters')
+    exportgraphics(fig,fullfile(directory_out,sprintf('ratioTraces_darkMode_id%d.eps',i)),'BackgroundColor','k')
+    
 %     close all
-% end
+end
 
+%%
 
+includeShadows = 0;
+minIntThreshold = 3e5;
+
+i = 1;
+
+totalInt = results_curated.upperLobe(i).intensityTrace + results_curated.lowerLobe(i).intensityTrace + results_curated.thirdLobe(i).intensityTrace;
+t = 1:numel(totalInt);
+keep = totalInt > minIntThreshold;
+ 
+x = results_curated.upperLobe(i).intensityTrace(keep);
+y = results_curated.lowerLobe(i).intensityTrace(keep);
+z = results_curated.thirdLobe(i).intensityTrace(keep);
+totalInt = sqrt(x.^2 + y.^2 + z.^2);
+
+c = t(keep);
+
+[X,Y,Z] = sphere(30);
+
+figure;
+surf(X,Y,Z,'FaceAlpha',0.2,'FaceColor',0.8*[1 1 1],'EdgeColor',col3); hold on
+scatter3(x./totalInt,y./totalInt,z./totalInt,10,c,'filled','MarkerFaceAlpha',1); colormap turbo;
+if includeShadows
+    colShadows = 0.8*[1 1 1];
+    scatter3(x./totalInt,y./totalInt,zeros(size(x)),5,colShadows,'filled','MarkerFaceAlpha',0.2)
+    scatter3(x./totalInt,zeros(size(x)),z./totalInt,5,colShadows,'filled','MarkerFaceAlpha',0.2)
+    scatter3(zeros(size(x)),y./totalInt,z./totalInt,5,colShadows,'filled','MarkerFaceAlpha',0.2)
+end
+axis equal
+
+camproj('orthographic')
+xlim([-1 1]);
+ylim([-1 1]);
+zlim([0 1]);
+
+xlabel('Upper lobe')
+ylabel('Lower lobe')
+zlabel('Third lobe')
+
+%%
+
+figure;
+N = 1;
+[azimuth,elevation,r] = cart2sph(smooth(x./totalInt,N),smooth(y./totalInt,N),smooth(z./totalInt,N));
+
+plot((azimuth*180/pi),); hold on
+plot((elevation*180/pi))
 
 %% Plot the rate of blueing in emission and excitation
 
