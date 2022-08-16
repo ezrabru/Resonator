@@ -132,9 +132,9 @@ xlabel('Wavelength (nm)'); box off
 set(gca,'FontSize',fontsize,'XColor','w','YColor','w','Color','k','Layer','top')
 
 savefig(fig,fullfile(directory_out,'experimentSpectra_QDot585_darkMode.fig'))
-exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot585_darkMode.png'),'Resolution',400)
+exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot585_darkMode.png'),'Resolution',400,'BackgroundColor','k')
 set(gcf,'renderer','Painters')
-exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot585_darkMode.eps'))
+exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot585_darkMode.eps'),'BackgroundColor','k')
 
 
 fig = figure('Position',[600 300 850 200]);
@@ -162,6 +162,6 @@ xlabel('Wavelength (nm)'); box off
 set(gca,'FontSize',fontsize,'XColor','w','YColor','w','Color','k','Layer','top')
 
 savefig(fig,fullfile(directory_out,'experimentSpectra_QDot655_darkMode.fig'))
-exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot655_darkMode.png'),'Resolution',400)
+exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot655_darkMode.png'),'Resolution',400,'BackgroundColor','k')
 set(gcf,'renderer','Painters')
-exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot655_darkMode.eps'))
+exportgraphics(fig,fullfile(directory_out,'experimentSpectra_QDot655_darkMode.eps'),'BackgroundColor','k')
