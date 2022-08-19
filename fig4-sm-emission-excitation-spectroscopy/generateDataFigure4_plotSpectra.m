@@ -47,10 +47,10 @@ T_dichroiclobe3.transmission = dichroiclobe3(:,2)/100;
 
 fig = figure('Position',[600 300 850 200]);
 subplot(1,2,1)
-line([405 405],[0 1],'LineWidth',2,'Color',col_405); hold on
-line([488 488],[0 1],'LineWidth',2,'Color',col_488);
-line([561 561],[0 1],'LineWidth',2,'Color',col_561);
-line([638 638],[0 1],'LineWidth',2,'Color',col_638);
+% line([405 405],[0 1],'LineWidth',2,'Color',col_405); hold on
+line([488 488],[0 1],'LineWidth',2,'Color',col_488); hold on
+% line([561 561],[0 1],'LineWidth',2,'Color',col_561); hold on
+line([638 638],[0 1],'LineWidth',2,'Color',col_638); hold on
 plot(T_qdot655.wavelength,T_qdot655.ex/0.59,'Color',col_638,'LineWidth',2);
 plot(T_exfilter.wavelength,T_exfilter.transmission,'k');
 plot(T_dichroic.wavelength,T_dichroic.transmission,'Color',col_lightgray);
@@ -79,10 +79,10 @@ fig = figure('Position',[600 300 850 200]);
 set(gcf,'Color','k')
 
 subplot(1,2,1)
-line([405 405],[0 1],'LineWidth',2,'Color',col_405); hold on
-line([488 488],[0 1],'LineWidth',2,'Color',col_488);
-line([561 561],[0 1],'LineWidth',2,'Color',col_561);
-line([638 638],[0 1],'LineWidth',2,'Color',col_638);
+% line([405 405],[0 1],'LineWidth',2,'Color',col_405); hold on
+line([488 488],[0 1],'LineWidth',2,'Color',col_488); hold on
+% line([561 561],[0 1],'LineWidth',2,'Color',col_561); hold on
+line([638 638],[0 1],'LineWidth',2,'Color',col_638); hold on
 plot(T_qdot655.wavelength,T_qdot655.ex/0.59,'Color',col_638,'LineWidth',2);
 plot(T_exfilter.wavelength,T_exfilter.transmission,'w');
 plot(T_dichroic.wavelength,T_dichroic.transmission,'Color',0.4*col_lightgray);
