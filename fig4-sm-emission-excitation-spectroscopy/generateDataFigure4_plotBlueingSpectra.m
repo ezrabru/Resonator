@@ -47,17 +47,6 @@ T_dichroiclobe3.transmission = dichroiclobe3(:,2)/100;
 %% Prepare for multiplication
 
 
-x = T_emfilter.wavelength;
-v = T_emfilter.transmission;
-xq = 200:0.1:1400;
-
-[xq,vq] = resampleSpectrum(x,v,xq);
-
-plot(x,v,'o',xq,vq,':.');
-
-
-%%
-
 wavelengthRange   = [350 800]; % nm
 wavelengthStep    = 1; % nm
 wavelengthBleuing = 100; % nm
@@ -65,15 +54,27 @@ wavelengthBleuing = 100; % nm
 
 wavelength = wavelengthRange(1):wavelengthStep:(wavelengthRange(2)+wavelengthBleuing);
 
-[~,emission] = resampleSpectrum(T_qdot655.wavelength,T_qdot655.em,wavelength);
-[~,excitation] = resampleSpectrum(T_qdot655.wavelength,T_qdot655.ex,wavelength);
-[~,emfilter] = resampleSpectrum(T_emfilter.wavelength,T_emfilter.transmission,wavelength);
-[~,dichroic] = resampleSpectrum(T_dichroic.wavelength,T_dichroic.transmission,wavelength);
-[~,dichroicLobe3] = resampleSpectrum(T_dichroiclobe3.wavelength,T_dichroiclobe3.transmission,wavelength);
-[~,qe] = resampleSpectrum(T_qe.wavelength,T_qe.qe,wavelength);
+[~,emission]      = resampleSpectrum(T_qdot655.wavelength,T_qdot655.em,wavelength);
+[~,excitation]    = resampleSpectrum(T_qdot655.wavelength,T_qdot655.ex,wavelength);
+[~,emfilter]      = resampleSpectrum(T_emfilter.wavelength,T_emfilter.transmission,wavelength);
+[~,dichroic]      = resampleSpectrum(T_dichroic.wavelength,T_dichroic.transmission,wavelength);
+[~,dichroiclobe3] = resampleSpectrum(T_dichroiclobe3.wavelength,T_dichroiclobe3.transmission,wavelength);
+[~,qe]            = resampleSpectrum(T_qe.wavelength,T_qe.qe,wavelength);
+
+emission = emission(:);
+excitation = excitation(:);
+emfilter = emfilter(:);
+dichroic = dichroic(:);
+dichroiclobe3 = dichroiclobe3(:);
+qe = qe(:);
+
+[~,idx_488] = min(abs(wavelength - 488));
+excitation = excitation/excitation(idx_488); % normalise such that excitation is 1 at 488
+[~,idx_638] = min(abs(wavelength - 638));
+power488 = 1;
+power638 = 1/excitation(idx_638);
 
 systemTransmission = emfilter.*dichroic.*qe;
-systemTransmission = systemTransmission';
 
 totalFluorescence = nan(numel(wavelengthBleuing),1);
 absorption488 = nan(numel(wavelengthBleuing),1);
@@ -82,46 +83,59 @@ absorption638 = nan(numel(wavelengthBleuing),1);
 lobe488 = nan(numel(wavelengthBleuing),1);
 lobe638 = nan(numel(wavelengthBleuing),1);
 lobe3   = nan(numel(wavelengthBleuing),1);
+lobe12  = nan(numel(wavelengthBleuing),1);
 
-figure('Position',[200 200 1000 200])
+%%
+
+figure('Position',[200 200 1300 300])
 for i=1:wavelengthBleuing
    
     emission = blueArrayStep(emission);
     excitation = blueArrayStep(excitation);
     
-    subplot(1,2,1)
+    subplot(1,3,1)
     plot(wavelength,excitation,'Color',col_638,'LineWidth',1.5); hold on
     plot(wavelength,dichroic,'Color',0.8*[1 1 1])
     
     [~,idx_488] = min(abs(wavelength - 488));
     [~,idx_638] = min(abs(wavelength - 638));
-    absorption488(i) = excitation(idx_488);
-    absorption638(i) = excitation(idx_638);
+    absorption488(i) = power488*excitation(idx_488);
+    absorption638(i) = power638*excitation(idx_638);
     line([488 488],[0 1],'LineWidth',2,'Color',col_488); hold on
     line([638 638],[0 1],'LineWidth',2,'Color',col_638); hold on
 
     xlim(wavelengthRange); ylim([0 1]); box off
     set(gca,'Layer','top')
 
-    subplot(1,2,2)
+    subplot(1,3,2)
     plot(wavelength,emission,'Color',col_638,'LineWidth',1.5); hold on
     plot(wavelength,emfilter,'k')
     plot(wavelength,dichroic,'Color',0.8*[1 1 1])
     plot(wavelength,qe,'--k')
+    plot(wavelength,dichroiclobe3,'b')
     % plot(wavelength,systemTransmission,'b')
     fill(wavelength,systemTransmission.*emission,'r','FaceAlpha',0.4,'EdgeColor','none')
 
     xlim(wavelengthRange); ylim([0 1]); box off
     set(gca,'Layer','top')
-    pause(0.001)
     
 
     totalFluorescence(i) = sum(systemTransmission.*emission,'all');
     
-    lobe3(i) = sum(systemTransmission.*(1-dichroicLobe3).*emission,'all');
+    lobe3(i) = sum(systemTransmission.*dichroiclobe3.*emission,'all');
     
-    lobe488(i) = abs(totalFluorescence(i) - lobe3(i))*absorption488(i)/(absorption488(i) + absorption638(i));
-    lobe638(i) = abs(totalFluorescence(i) - lobe3(i))*absorption638(i)/(absorption488(i) + absorption638(i));
+    lobe12(i) = sum(systemTransmission.*(1 - dichroiclobe3).*emission,'all');
+
+    lobe488(i) = lobe12(i)*absorption488(i)/(absorption488(i) + absorption638(i));
+    lobe638(i) = lobe12(i)*absorption638(i)/(absorption488(i) + absorption638(i));
+
+    subplot(1,3,3)
+    plot(1:i,lobe3); hold on
+    plot(1:i,lobe488,'Color',col_488);
+    plot(1:i,lobe638,'Color',col_638);
+    xlim([0 wavelengthBleuing]); box off
+
+    pause(0.00001)
     
     if i ~= wavelengthBleuing; clf; end
 end
@@ -130,9 +144,12 @@ end
 
 
 figure
-plot(1:wavelengthBleuing,lobe488); hold on
+% plot(1:wavelengthBleuing,lobe12); hold on
+plot(1:wavelengthBleuing,lobe3); hold on
+plot(1:wavelengthBleuing,lobe488);
 plot(1:wavelengthBleuing,lobe638);
-plot(1:wavelengthBleuing,lobe3);
+legend('lobe 3','lobe 488 nm','lobe 638 nm')
+
 ylim([0 inf])
 
 %% Function
@@ -145,7 +162,8 @@ X_new = [X_new; X_new(end)];
 end
 
 function [xq,vq] = resampleSpectrum(x,v,xq)
-vq = interp1(x,v,xq,'linear');
+vq = interp1(x(:),v(:),xq(:),'linear');
 vq(xq < x(1)) = v(1);
 vq(xq > x(end)) = v(end);
+vq = vq';
 end
