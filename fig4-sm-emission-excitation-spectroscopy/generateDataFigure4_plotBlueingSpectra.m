@@ -87,7 +87,7 @@ lobe12  = nan(numel(wavelengthBleuing),1);
 
 %%
 
-figure('Position',[200 200 1300 300])
+figure('Position',[50 200 1200 250])
 for i=1:wavelengthBleuing
    
     emission = blueArrayStep(emission);
@@ -122,9 +122,8 @@ for i=1:wavelengthBleuing
 
     totalFluorescence(i) = sum(systemTransmission.*emission,'all');
     
-    lobe3(i) = sum(systemTransmission.*dichroiclobe3.*emission,'all');
-    
-    lobe12(i) = sum(systemTransmission.*(1 - dichroiclobe3).*emission,'all');
+    lobe3(i) = sum(systemTransmission.*(1 - dichroiclobe3).*emission,'all');
+    lobe12(i) = sum(systemTransmission.*dichroiclobe3.*emission,'all');
 
     lobe488(i) = lobe12(i)*absorption488(i)/(absorption488(i) + absorption638(i));
     lobe638(i) = lobe12(i)*absorption638(i)/(absorption488(i) + absorption638(i));
@@ -142,6 +141,13 @@ end
 
 %%
 
+figure
+plot(lobe12); hold on
+plot(lobe488)
+plot(lobe638)
+plot(lobe488+lobe638,'--k')
+
+%%
 
 figure
 % plot(1:wavelengthBleuing,lobe12); hold on
@@ -151,6 +157,16 @@ plot(1:wavelengthBleuing,lobe638);
 legend('lobe 3','lobe 488 nm','lobe 638 nm')
 
 ylim([0 inf])
+
+
+%%
+
+figure
+% plot(1:wavelengthBleuing,lobe12); hold on
+plot(1:wavelengthBleuing,lobe3./(lobe488+lobe638+lobe3)); hold on
+plot(1:wavelengthBleuing,lobe488./(lobe488+lobe638+lobe3));
+plot(1:wavelengthBleuing,lobe638./(lobe488+lobe638+lobe3));
+legend('lobe 3','lobe 488 nm','lobe 638 nm')
 
 %% Function
 
