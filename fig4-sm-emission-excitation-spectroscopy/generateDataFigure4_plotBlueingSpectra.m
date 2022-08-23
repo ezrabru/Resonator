@@ -44,12 +44,12 @@ T_dichroiclobe3.wavelength = dichroiclobe3(:,1);
 T_dichroiclobe3.transmission = dichroiclobe3(:,2)/100;
 
 
-%% Prepare for multiplication
 
+%% Prepare for multiplication
 
 wavelengthRange   = [350 800]; % nm
 wavelengthStep    = 1; % nm
-wavelengthBleuing = 100; % nm
+wavelengthBleuing = 200; % nm
 
 
 wavelength = wavelengthRange(1):wavelengthStep:(wavelengthRange(2)+wavelengthBleuing);
@@ -85,15 +85,16 @@ lobe638 = nan(numel(wavelengthBleuing),1);
 lobe3   = nan(numel(wavelengthBleuing),1);
 lobe12  = nan(numel(wavelengthBleuing),1);
 
-%%
 
-figure('Position',[50 200 1200 250])
+
+
+figure('Position',[50 200 1000 500])
 for i=1:wavelengthBleuing
    
     emission = blueArrayStep(emission);
     excitation = blueArrayStep(excitation);
     
-    subplot(1,3,1)
+    subplot(2,2,1)
     plot(wavelength,excitation,'Color',col_638,'LineWidth',1.5); hold on
     plot(wavelength,dichroic,'Color',0.8*[1 1 1])
     
@@ -107,7 +108,7 @@ for i=1:wavelengthBleuing
     xlim(wavelengthRange); ylim([0 1]); box off
     set(gca,'Layer','top')
 
-    subplot(1,3,2)
+    subplot(2,2,2)
     plot(wavelength,emission,'Color',col_638,'LineWidth',1.5); hold on
     plot(wavelength,emfilter,'k')
     plot(wavelength,dichroic,'Color',0.8*[1 1 1])
@@ -128,11 +129,18 @@ for i=1:wavelengthBleuing
     lobe488(i) = lobe12(i)*absorption488(i)/(absorption488(i) + absorption638(i));
     lobe638(i) = lobe12(i)*absorption638(i)/(absorption488(i) + absorption638(i));
 
-    subplot(1,3,3)
-    plot(1:i,lobe3); hold on
+    subplot(2,2,3)
+    plot(1:i,lobe3,'Color',col_lightgray); hold on
     plot(1:i,lobe488,'Color',col_488);
     plot(1:i,lobe638,'Color',col_638);
     xlim([0 wavelengthBleuing]); box off
+
+    subplot(2,2,4)
+    plot(1:i,lobe3./(lobe488+lobe638+lobe3),'Color',col_lightgray); hold on
+    plot(1:i,lobe488./(lobe488+lobe638+lobe3),'Color',col_488);
+    plot(1:i,lobe638./(lobe488+lobe638+lobe3),'Color',col_638);
+    xlim([0 wavelengthBleuing]); box off
+    ylim([0 1])
 
     pause(0.00001)
     
@@ -141,32 +149,24 @@ end
 
 %%
 
-figure
-plot(lobe12); hold on
-plot(lobe488)
-plot(lobe638)
-plot(lobe488+lobe638,'--k')
+figure('Position',[50 200 1000 250])
 
-%%
-
-figure
-% plot(1:wavelengthBleuing,lobe12); hold on
-plot(1:wavelengthBleuing,lobe3); hold on
-plot(1:wavelengthBleuing,lobe488);
-plot(1:wavelengthBleuing,lobe638);
+subplot(1,2,1)
+plot(1:wavelengthBleuing,lobe488,'Color',col_488); hold on
+plot(1:wavelengthBleuing,lobe638,'Color',col_638);
+plot(1:wavelengthBleuing,lobe3,'Color',col_lightgray);
 legend('lobe 3','lobe 488 nm','lobe 638 nm')
-
 ylim([0 inf])
+xlabel('Spectral shift (nm)')
+ylabel('Lobe intensity')
 
-
-%%
-
-figure
-% plot(1:wavelengthBleuing,lobe12); hold on
-plot(1:wavelengthBleuing,lobe3./(lobe488+lobe638+lobe3)); hold on
-plot(1:wavelengthBleuing,lobe488./(lobe488+lobe638+lobe3));
-plot(1:wavelengthBleuing,lobe638./(lobe488+lobe638+lobe3));
+subplot(1,2,2)
+plot(1:wavelengthBleuing,lobe488./(lobe488+lobe638+lobe3),'Color',col_488); hold on
+plot(1:wavelengthBleuing,lobe638./(lobe488+lobe638+lobe3),'Color',col_638);
+plot(1:wavelengthBleuing,lobe3./(lobe488+lobe638+lobe3),'Color',col_lightgray);
 legend('lobe 3','lobe 488 nm','lobe 638 nm')
+xlabel('Spectral shift (nm)')
+ylabel('Lobe intensity/Total intensity')
 
 %% Function
 
