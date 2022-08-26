@@ -3,7 +3,7 @@ close all
 clc
 addpath('lib')
 
-directory_out = fullfile(pwd,'simulated spectral blueing');
+directory_out = fullfile(pwd,'simulated spectral blueing 3 lobe');
 if ~exist(directory_out,'dir'); mkdir(directory_out); end
 
 fontsize = 10;
