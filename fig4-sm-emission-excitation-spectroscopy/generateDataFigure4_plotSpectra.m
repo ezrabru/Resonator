@@ -2,7 +2,7 @@ clear all
 close all
 clc
 
-directory_out = fullfile(pwd,'figures experiment spectra');
+directory_out = fullfile(pwd,'results','figures experiment spectra');
 if ~exist(directory_out,'dir'); mkdir(directory_out); end
 
 fontsize = 8;
