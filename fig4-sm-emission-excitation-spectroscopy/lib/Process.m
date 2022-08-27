@@ -27,18 +27,138 @@ classdef Process
             img = (img - bkgnd - obj.Microscope.camOffset)./(obj.Microscope.camGain*obj.Microscope.camQE); % convert to photons
             
             [x,y] = find2DlocalisationCandidates(obj,img);
-            figure; imshow(img,[]); colorbar; hold on;
+            %figure; imshow(img,[]); colorbar; hold on;
             
             locs = fit2Dlocalisations(obj,img,x,y);
-%             locs = groupLocalisations(obj,locs);
+            locs = groupLocalisations(obj,locs);
             
-            scatter([locs.y]/1e9,[locs.x]/1e9,30,'x'); hold on
-            scatter([locs.y]/1e9,[locs.x]/1e9,30,'o');            
+            %scatter([locs.y]/1e9,[locs.x]/1e9,30,'x'); hold on
+            %scatter([locs.y]/1e9,[locs.x]/1e9,30,'o');            
 
-%             scatter([locs.upperLobe.y]/1e9,[locs.upperLobe.x]/1e9,30,'x'); hold on
-%             scatter([locs.lowerLobe.y]/1e9,[locs.lowerLobe.x]/1e9,30,'o');
+            %scatter([locs.upperLobe.y]/1e9,[locs.upperLobe.x]/1e9,30,'x'); hold on
+            %scatter([locs.lowerLobe.y]/1e9,[locs.lowerLobe.x]/1e9,30,'o');
 
             if isempty(locs); locs = nan; end
+        end
+
+        function locs = processFrame_2lobe(obj,img,bkgnd)
+            % PROCESSFRAME_2lobe
+            
+            img = (img - bkgnd - obj.Microscope.camOffset)./(obj.Microscope.camGain*obj.Microscope.camQE); % convert to photons
+            
+            [x,y] = find2DlocalisationCandidates(obj,img);
+            %figure; imshow(img,[]); colorbar; hold on;
+            
+            locs = fit2Dlocalisations(obj,img,x,y);
+            locs = groupLocalisations_2lobe(obj,locs);
+            
+            % scatter([locs.y]/1e9,[locs.x]/1e9,30,'x'); hold on
+            % scatter([locs.y]/1e9,[locs.x]/1e9,30,'o');            
+            
+            % scatter([locs.upperLobe.y]/1e9,[locs.upperLobe.x]/1e9,30,'x'); hold on
+            % scatter([locs.lowerLobe.y]/1e9,[locs.lowerLobe.x]/1e9,30,'o');
+
+            if isempty(locs); locs = nan; end
+        end
+        
+        function locsGrouped = groupLocalisations_2lobe(obj,locs)
+            %GROUPLOCALISATIONS_2LOBE
+            
+            dx = obj.localisationParams.dx;
+            dy = obj.localisationParams.dy;
+            
+            locs = struct2table(locs);
+
+            % two rounds of removing localisations that either have no
+            % candidates for grouping or can be grouped with multiple
+            % localisations
+            locs = removeAmbiguousGroupingCandidates_2lobe(obj,locs);
+            locs = removeAmbiguousGroupingCandidates_2lobe(obj,locs);
+            
+            locs_upper = table;
+            locs_lower = table;
+
+            % pair localisations
+            for i = 1:height(locs)
+                if locs.upperLobeCandidate(i) % if it's an upper lobe
+                    x_i = locs.x(i)/1e9;
+                    y_i = locs.y(i)/1e9;
+
+                    % find the matching lower lobe
+                    x_i_ll = x_i + dy - 1; % expected x-position lower lobe
+                    y_i_ll = y_i + dx; % expected y-position lower lobe
+
+                    D = sqrt(([locs.x]/1e9 - x_i_ll).^2 + ([locs.y]/1e9 - y_i_ll).^2);
+                    D(i) = inf; % exclude the same localisation
+                    [D_min_ll,D_min_ll_idx] = min(D);
+                    if D_min_ll <= obj.localisationParams.wiggle % lower lobe was found
+                        if isempty(locs_lower)
+                            locs_upper = locs(i,:);
+                            locs_lower = locs(D_min_ll_idx,:);
+                        else
+                            locs_upper = [locs_upper; locs(i,:)];
+                            locs_lower = [locs_lower; locs(D_min_ll_idx,:)];
+                        end
+                    else
+                        continue
+                    end
+                end
+            end
+
+            % get center of PSF
+            locs_center = table;
+            locs_center.x = ([locs_lower.x]' + [locs_upper.x]')/2;
+            locs_center.y = ([locs_lower.y]' + [locs_upper.y]')/2;
+            locs_center.photons = [locs_lower.photons]' + [locs_upper.photons]';
+            
+            locsGrouped = struct;
+            locsGrouped.upperLobe = locs_upper;
+            locsGrouped.lowerLobe = locs_lower;
+            locsGrouped.center = locs_center;
+            
+            %figure;
+            %scatter([locsGrouped.upperLobe.y]/1e9,[locsGrouped.upperLobe.x]/1e9); hold on
+            %scatter([locsGrouped.lowerLobe.y]/1e9,[locsGrouped.lowerLobe.x]/1e9)
+            %scatter([locsGrouped.center.y]/1e9,[locsGrouped.center.x]/1e9)
+        end
+
+        function locs = removeAmbiguousGroupingCandidates_2lobe(obj,locs)
+            %REMOVEAMBIGUOUSGROUPINGCANDIDATES_2LOBE
+
+            dx = obj.localisationParams.dx;
+            dy = obj.localisationParams.dy;
+
+            for i = 1:height(locs)
+                x_i = locs.x(i)/1e9;
+                y_i = locs.y(i)/1e9;
+        
+                % check if this localisation can be an upper lobe
+                x_i_ll = x_i + dy - 1; % expected x-position lower lobe
+                y_i_ll = y_i + dx; % expected y-position lower lobe
+                D = sqrt(([locs.x]/1e9 - x_i_ll).^2 + ([locs.y]/1e9 - y_i_ll).^2);
+                D(i) = inf; % exclude the same localisation
+                [D_min_ll,~] = min(D);
+                if D_min_ll <= obj.localisationParams.wiggle % lower lobe was found
+                    locs.upperLobeCandidate(i) = 1;
+                else
+                    locs.upperLobeCandidate(i) = 0;
+                end
+        
+                % check if this localisation can be an lower lobe
+                x_i_ul = x_i - (dy - 1); % expected x-position upper lobe
+                y_i_ul = y_i - dx; % expected y-position upper lobe
+                D = sqrt(([locs.x]/1e9 - x_i_ul).^2 + ([locs.y]/1e9 - y_i_ul).^2);
+                D(i) = inf; % exclude the same localisation
+                [D_min_ul,~] = min(D);
+                if D_min_ul <= obj.localisationParams.wiggle % lower lobe was found
+                    locs.lowerLobeCandidate(i) = 1;
+                else
+                    locs.lowerLobeCandidate(i) = 0;
+                end
+            end
+
+            % only keep localisations that are either a lower or upper lobe
+            locs = locs(locs.upperLobeCandidate + locs.lowerLobeCandidate == 1,:);
         end
 
         function locsGrouped = groupLocalisations(obj,locs)
@@ -69,10 +189,10 @@ classdef Process
             locsGrouped.center = locs_center;
             locsGrouped.center.angle = dAngle;
             
-            % figure;
-            % scatter([locsGrouped.upperLobe.y]/1e9,[locsGrouped.upperLobe.x]/1e9); hold on
-            % scatter([locsGrouped.lowerLobe.y]/1e9,[locsGrouped.lowerLobe.x]/1e9)
-            % scatter([locsGrouped.center.y]/1e9,[locsGrouped.center.x]/1e9)
+            figure;
+            scatter([locsGrouped.upperLobe.y]/1e9,[locsGrouped.upperLobe.x]/1e9); hold on
+            scatter([locsGrouped.lowerLobe.y]/1e9,[locsGrouped.lowerLobe.x]/1e9)
+            scatter([locsGrouped.center.y]/1e9,[locsGrouped.center.x]/1e9)
         end
 
         function [locs_upper,locs_lower] = pairLocalisationsByDistance(obj,locs)
