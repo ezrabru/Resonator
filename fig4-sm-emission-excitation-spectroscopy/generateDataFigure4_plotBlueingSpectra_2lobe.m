@@ -15,24 +15,24 @@ col_561 = [177 212 55]/255; % 561 nm
 col_638 = [212 0 0]/255; % 638 nm
 
 col1 = col_488;
-col2 = col_561;
+col2 = col_638;
 
 wavelength1 = 488;
-wavelength2 = 561;
+wavelength2 = 638;
 
-qdotName = 'QDot585';
-peakEmissionWavelength = 585;
-qdot = readmatrix(fullfile(pwd,'spectra dyes and filters','dyes','Qdot585.txt'));
-T_qdot.wavelength = qdot(:,1);
-T_qdot.ex = qdot(:,2)/100;
-T_qdot.em = qdot(:,3)/100;
-
-% qdotName = 'QDot655';
-% peakEmissionWavelength = 655;
-% qdot = readmatrix(fullfile(pwd,'spectra dyes and filters','dyes','Qdot655.txt'));
+% qdotName = 'QDot585';
+% peakEmissionWavelength = 585;
+% qdot = readmatrix(fullfile(pwd,'spectra dyes and filters','dyes','Qdot585.txt'));
 % T_qdot.wavelength = qdot(:,1);
 % T_qdot.ex = qdot(:,2)/100;
 % T_qdot.em = qdot(:,3)/100;
+
+qdotName = 'QDot655';
+peakEmissionWavelength = 655;
+qdot = readmatrix(fullfile(pwd,'spectra dyes and filters','dyes','Qdot655.txt'));
+T_qdot.wavelength = qdot(:,1);
+T_qdot.ex = qdot(:,2)/100;
+T_qdot.em = qdot(:,3)/100;
 
 emfilter = readmatrix(fullfile(pwd,'spectra dyes and filters','filters','ZET405-488-561-640mv2.txt'));
 T_emfilter.wavelength = emfilter(:,1);
@@ -47,10 +47,10 @@ T_qe.wavelength = qe(:,1);
 T_qe.qe = qe(:,2)/100;
 
 wavelengthRange   = [350 800]; % nm
-wavelengthBleuing = 125; % nm
+wavelengthBleuing = 200; % nm
 
 theme = 'light'; % 'light' or 'dark'
-writeGif = 1; % write gif away (1), or only display (0)
+writeGif = 0; % write gif away (1), or only display (0)
 
 
 %% Generate light mode blueing animation
@@ -240,3 +240,44 @@ savefig(fig,fullfile(directory_out,sprintf('%s_darkMode.fig',figureBasename)))
 exportgraphics(fig,fullfile(directory_out,sprintf('%s_darkMode.png',figureBasename)),'Resolution',400,'BackgroundColor','k')
 set(gcf,'renderer','Painters')
 exportgraphics(fig,fullfile(directory_out,sprintf('%s_darkMode.eps',figureBasename)),'BackgroundColor','k')
+
+
+%% scatter plot
+
+lw = 1.5;
+fontsize = 10;
+
+figureBasename = sprintf('experimentSpectra_2lobe_%s',qdotName);
+
+maxTotal = max([max(lobe1) max(lobe2)]);
+
+fig = figure('Position',[50 200 320 320]);
+plot(lobe1,lobe2,'k'); hold on
+scatter(lobe1,lobe2,20,1:wavelengthBleuing,'o','filled');
+xlim([-1 maxTotal]); ylim([-1 maxTotal]); axis square; grid on; box off
+xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
+colormap parula; c = colorbar; c.Label.String = '\Delta\lambda_{blueing} (nm)';
+set(gcf,'Color','w')
+set(gca,'Fontsize',fontsize)
+
+% save light mode version
+savefig(fig,fullfile(directory_out,sprintf('%s_scatter_lightMode.fig',figureBasename)))
+exportgraphics(fig,fullfile(directory_out,sprintf('%s_scatter_lightMode.png',figureBasename)),'Resolution',400)
+set(gcf,'renderer','Painters')
+exportgraphics(fig,fullfile(directory_out,sprintf('%s_scatter_lightMode.eps',figureBasename)))
+
+% generate dark mode
+fig = figure('Position',[50 200 320 320]);
+plot(lobe1,lobe2,'w'); hold on
+scatter(lobe1,lobe2,20,1:wavelengthBleuing,'o','filled');
+xlim([-1 maxTotal]); ylim([-1 maxTotal]); axis square; grid on; box off
+xlabel('Intensity lower lobe'); ylabel('Intensity upper lobe');
+colormap parula; c = colorbar; c.Label.String = '\Delta\lambda_{blueing} (nm)'; c.Color = 'w';
+set(gcf,'Color','k')
+set(gca,'Fontsize',fontsize,'Color','k','XColor','w','YColor','w','Layer','top')
+
+% save dark mode version
+savefig(fig,fullfile(directory_out,sprintf('%s_scatter_darkMode.fig',figureBasename)))
+exportgraphics(fig,fullfile(directory_out,sprintf('%s_scatter_darkMode.png',figureBasename)),'Resolution',400,'BackgroundColor','k')
+set(gcf,'renderer','Painters')
+exportgraphics(fig,fullfile(directory_out,sprintf('%s_scatter_darkMode.eps',figureBasename)),'BackgroundColor','k')
