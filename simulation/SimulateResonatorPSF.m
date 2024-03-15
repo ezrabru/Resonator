@@ -59,15 +59,15 @@ noiseParam.sigmaReadNoise = 2.1;
 noiseParam.eADU     = 1;
 bit                 = 12;
 Cam = Camera(cameraType,camPixSize,noiseParam,bit);
-
+%%
 totalPSF = psf_lobe1 + psf_lobe2 + psf_lobe3;
-totalPSF = totalPSF*500;
-totalPSF = Cam.cameraNoiseModel(totalPSF);
+totalPSF = totalPSF*5000;
+totalPSF_noise = Cam.cameraNoiseModel(totalPSF);
 
-totalPSF = (totalPSF - noiseParam.offset)/(noiseParam.eADU*noiseParam.QE);
+totalPSF_noise = (totalPSF_noise - noiseParam.offset)/(noiseParam.eADU*noiseParam.QE);
 
 figure
-imagesc(totalPSF)
+imagesc(totalPSF_noise)
 axis equal; axis tight
 colormap gray; axis off; colorbar
 
